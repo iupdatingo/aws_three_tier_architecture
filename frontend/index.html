@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Three-Tier App</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 640px; margin: 3rem auto; padding: 0 1rem; color: #222; }
+    .card { border: 1px solid #ddd; border-radius: 8px; padding: 1rem 1.25rem; margin-top: 1rem; }
+    .ok { color: #1a7f37; } .err { color: #cf222e; }
+    button { padding: .5rem 1rem; cursor: pointer; }
+    pre { background: #f6f8fa; padding: .75rem; overflow-x: auto; }
+  </style>
+</head>
+<body>
+  <h1>Three-Tier Web App</h1>
+  <p>Web tier: nginx on EC2 &rarr; Internal ALB &rarr; App tier &rarr; RDS</p>
+
+  <div class="card">
+    <h2>Web tier</h2>
+    <p>Served by: <strong id="host"></strong></p>
+    <p class="ok">Frontend is up.</p>
+  </div>
+
+  <div class="card">
+    <h2>App tier</h2>
+    <button id="check">Call /api/health</button>
+    <p id="status"></p>
+    <pre id="output" hidden></pre>
+  </div>
+
+  <script>
+    document.getElementById('host').textContent = location.host;
+    document.getElementById('check').addEventListener('click', async () => {
+      const status = document.getElementById('status');
+      const output = document.getElementById('output');
+      status.textContent = 'Calling backend…';
+      status.className = '';
+      try {
+        const res = await fetch('/api/health');
+        const text = await res.text();
+        status.textContent = res.ok ? 'Backend reachable' : 'Backend returned ' + res.status;
+        status.className = res.ok ? 'ok' : 'err';
+        output.textContent = text;
+        output.hidden = false;
+      } catch (e) {
+        status.textContent = 'Could not reach backend: ' + e.message;
+        status.className = 'err';
+        output.hidden = true;
+      }
+    });
+  </script>
+</body>
+</html>
