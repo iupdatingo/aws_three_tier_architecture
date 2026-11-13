@@ -1,54 +1,99 @@
+<!-- index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Three-Tier App</title>
-  <style>
-    body { font-family: system-ui, sans-serif; max-width: 640px; margin: 3rem auto; padding: 0 1rem; color: #222; }
-    .card { border: 1px solid #ddd; border-radius: 8px; padding: 1rem 1.25rem; margin-top: 1rem; }
-    .ok { color: #1a7f37; } .err { color: #cf222e; }
-    button { padding: .5rem 1rem; cursor: pointer; }
-    pre { background: #f6f8fa; padding: .75rem; overflow-x: auto; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tech with Ajit</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <h1>Three-Tier Web App</h1>
-  <p>Web tier: nginx on EC2 &rarr; Internal ALB &rarr; App tier &rarr; RDS</p>
+    <div class="container">
+        <h1>Tech with Ajit</h1>
+        <p>Basic Three-Tier Architecture Example</p>
+        
+        <div class="message-container">
+            <h2>Message from Database:</h2>
+            <div id="message-box">Loading...</div>
+        </div>
+        
+        <div class="form-container">
+            <h2>Add New Message</h2>
+            <form id="message-form">
+                <div class="form-group">
+                    <label for="message">New Message:</label>
+                    <input type="text" id="message" name="message" required>
+                </div>
+                <button type="submit">Save Message</button>
+            </form>
+        </div>
+    </div>
 
-  <div class="card">
-    <h2>Web tier</h2>
-    <p>Served by: <strong id="host"></strong></p>
-    <p class="ok">Frontend is up.</p>
-  </div>
-
-  <div class="card">
-    <h2>App tier</h2>
-    <button id="check">Call /api/health</button>
-    <p id="status"></p>
-    <pre id="output" hidden></pre>
-  </div>
-
-  <script>
-    document.getElementById('host').textContent = location.host;
-    document.getElementById('check').addEventListener('click', async () => {
-      const status = document.getElementById('status');
-      const output = document.getElementById('output');
-      status.textContent = 'Calling backend…';
-      status.className = '';
-      try {
-        const res = await fetch('/api/health');
-        const text = await res.text();
-        status.textContent = res.ok ? 'Backend reachable' : 'Backend returned ' + res.status;
-        status.className = res.ok ? 'ok' : 'err';
-        output.textContent = text;
-        output.hidden = false;
-      } catch (e) {
-        status.textContent = 'Could not reach backend: ' + e.message;
-        status.className = 'err';
-        output.hidden = true;
-      }
-    });
-  </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load messages on page load
+            fetchMessages();
+            
+            // Handle form submission
+            const form = document.getElementById('message-form');
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const message = document.getElementById('message').value;
+                
+                // Send message to backend
+                fetch('api/save_message.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: 'message=' + encodeURIComponent(message)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Clear form and reload messages
+                        document.getElementById('message').value = '';
+                        fetchMessages();
+                    } else {
+                        alert('Error saving message: ' + data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while saving the message');
+                });
+            });
+        });
+        
+        function fetchMessages() {
+            const messageBox = document.getElementById('message-box');
+            messageBox.textContent = 'Loading...';
+            
+            // Fetch messages from backend
+            fetch('api/get_messages.php')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Display messages
+                        if (data.messages.length === 0) {
+                            messageBox.innerHTML = '<p class="no-messages">No messages found</p>';
+                        } else {
+                            let html = '<ul>';
+                            data.messages.forEach(msg => {
+                                html += `<li>${msg.message} <span class="timestamp">(${msg.created_at})</span></li>`;
+                            });
+                            html += '</ul>';
+                            messageBox.innerHTML = html;
+                        }
+                    } else {
+                        messageBox.innerHTML = '<p class="error">Error: ' + data.error + '</p>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    messageBox.innerHTML = '<p class="error">Failed to load messages</p>';
+                });
+        }
+    </script>
 </body>
 </html>
