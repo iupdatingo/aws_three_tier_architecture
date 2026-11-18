@@ -78,15 +78,27 @@
                         if (data.messages.length === 0) {
                             messageBox.innerHTML = '<p class="no-messages">No messages found</p>';
                         } else {
-                            let html = '<ul>';
+                            // Build the list with textContent so message text
+                            // is shown as plain text, never run as HTML
+                            const list = document.createElement('ul');
                             data.messages.forEach(msg => {
-                                html += `<li>${msg.message} <span class="timestamp">(${msg.created_at})</span></li>`;
+                                const li = document.createElement('li');
+                                li.textContent = msg.message + ' ';
+                                const time = document.createElement('span');
+                                time.className = 'timestamp';
+                                time.textContent = '(' + msg.created_at + ')';
+                                li.appendChild(time);
+                                list.appendChild(li);
                             });
-                            html += '</ul>';
-                            messageBox.innerHTML = html;
+                            messageBox.innerHTML = '';
+                            messageBox.appendChild(list);
                         }
                     } else {
-                        messageBox.innerHTML = '<p class="error">Error: ' + data.error + '</p>';
+                        const err = document.createElement('p');
+                        err.className = 'error';
+                        err.textContent = 'Error: ' + data.error;
+                        messageBox.innerHTML = '';
+                        messageBox.appendChild(err);
                     }
                 })
                 .catch(error => {

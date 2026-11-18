@@ -1,0 +1,8 @@
+; Database settings for the app tier.
+; Copy this file to /etc/three-tier-app/db.ini on the backend server
+; and fill in your own values. Never commit the real file to GitHub.
+
+DB_HOST="database-1.c5m62mqi05yb.eu-west-2.rds.amazonaws.com"
+DB_NAME="hello_world"
+DB_USER="admin"
+DB_PASSWORD="change-me"
